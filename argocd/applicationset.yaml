@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-environments
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+            namespace: nykaa
+            valuesFile: values.yaml
+          - env: prod
+            namespace: nykaa
+            valuesFile: values.yaml
+  template:
+    metadata:
+      name: argocd-demo-{{env}}
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/devendra-singh2000/argocd-helm-repo.git
+        targetRevision: main
+        path: charts/argocd-demo
+        helm:
+          valueFiles:
+            - {{valuesFile}}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: {{namespace}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
